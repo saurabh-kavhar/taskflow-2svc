@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TaskFlow Lite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      border: 1px solid #e5e7eb;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    button {
+      background: #111827;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #000;
+    }
+
+    .tasks {
+      margin-top: 30px;
+    }
+
+    .task-item {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .status {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #e5e7eb;
+    }
+
+    .token-box {
+      margin-top: 20px;
+      word-break: break-all;
+      font-size: 12px;
+      background: #f9fafb;
+      padding: 10px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>TaskFlow Lite — UI Test</h1>
+
+    <div class="grid">
+
+      <!-- Register -->
+      <div class="card">
+        <h3>Register</h3>
+        <input id="regEmail" placeholder="Email" />
+        <input id="regPassword" type="password" placeholder="Password" />
+        <button onclick="register()">Register</button>
+      </div>
+
+      <!-- Login -->
+      <div class="card">
+        <h3>Login</h3>
+        <input id="loginEmail" placeholder="Email" />
+        <input id="loginPassword" type="password" placeholder="Password" />
+        <button onclick="login()">Login</button>
+      </div>
+
+    </div>
+
+    <!-- Token -->
+    <div class="token-box" id="tokenBox">
+      Token will appear here after login...
+    </div>
+
+    <!-- Create Task -->
+    <div class="card" style="margin-top:20px;">
+      <h3>Create Task</h3>
+      <input id="taskTitle" placeholder="Task title" />
+      <button onclick="createTask()">Create Task</button>
+    </div>
+
+    <!-- Task List -->
+    <div class="tasks">
+      <h3>Your Tasks</h3>
+      <button onclick="loadTasks()">Refresh Tasks</button>
+      <div id="taskList"></div>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = "http://" + window.location.host;
+    let TOKEN = "";
+
+    async function register() {
+      const email = document.getElementById("regEmail").value;
+      const password = document.getElementById("regPassword").value;
+
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      alert(await res.text());
+    }
+
+    async function login() {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      TOKEN = data.access_token;
+
+      document.getElementById("tokenBox").innerText = TOKEN;
+    }
+
+    async function createTask() {
+      const title = document.getElementById("taskTitle").value;
+
+      await fetch(`${API_BASE}/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${TOKEN}`
+        },
+        body: JSON.stringify({ title })
+      });
+
+      loadTasks();
+    }
+
+    async function loadTasks() {
+      const res = await fetch(`${API_BASE}/tasks`, {
+        headers: {
+          "Authorization": `Bearer ${TOKEN}`
+        }
+      });
+
+      const tasks = await res.json();
+      const list = document.getElementById("taskList");
+
+      list.innerHTML = "";
+
+      tasks.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "task-item";
+        div.innerHTML = `
+          <span>${t.title}</span>
+          <span class="status">${t.status}</span>
+        `;
+        list.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
