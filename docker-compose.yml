@@ -18,10 +18,11 @@ services:
       DATABASE_URL: postgresql+psycopg2://app:apppass@db:5432/appdb
       JWT_SECRET: supersecret
       PORT: "8000"
-    ports:
-      - "8001:8000"
     depends_on:
       - db
+    # Optional: keep private (recommended)
+    # ports:
+    #   - "8001:8000"
 
   task-service:
     build: ./task-service
@@ -29,11 +30,20 @@ services:
       DATABASE_URL: postgresql+psycopg2://app:apppass@db:5432/appdb
       AUTH_SERVICE_URL: http://auth-service:8000
       PORT: "8000"
-    ports:
-      - "8002:8000"
     depends_on:
       - db
       - auth-service
+    # Optional: keep private (recommended)
+    # ports:
+    #   - "8002:8000"
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "80:80"
+    depends_on:
+      - auth-service
+      - task-service
 
 volumes:
   db_data:
