@@ -4,9 +4,9 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: apppass
-      POSTGRES_DB: appdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Pass123!
+      POSTGRES_DB: mydatabase
     ports:
       - "5432:5432"
     volumes:
@@ -15,7 +15,7 @@ services:
   auth-service:
     build: ./auth-service
     environment:
-      DATABASE_URL: mydatabase.cns00c04uj8v.us-east-1.rds.amazonaws.com:5432/mydatabase
+      DATABASE_URL: postgresql+psycopg2://postgres:Pass123!@mydatabase.cns00c04uj8v.us-east-1.rds.amazonaws.com:5432/mydatabase
       JWT_SECRET: supersecret
       PORT: "8000"
     depends_on:
@@ -27,7 +27,7 @@ services:
   task-service:
     build: ./task-service
     environment:
-      DATABASE_URL: mydatabase.cns00c04uj8v.us-east-1.rds.amazonaws.com:5432/mydatabase
+      DATABASE_URL: postgresql+psycopg2://postgres:Pass123!@mydatabase.cns00c04uj8v.us-east-1.rds.amazonaws.com:5432/mydatabase
       AUTH_SERVICE_URL: http://auth-service:8000
       PORT: "8000"
     depends_on:
