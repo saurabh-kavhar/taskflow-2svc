@@ -1,0 +1,32 @@
+{
+    "family": "taskflow-auth",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+      {
+        "name": "auth-service",
+        "image": "IMAGE_URI",
+        "portMappings": [
+          {
+            "containerPort": 8000,
+            "protocol": "tcp"
+          }
+        ],
+        "environment": [
+          {
+            "name": "DATABASE_URL",
+            "value": "YOUR_RDS_URL"
+          },
+          {
+            "name": "JWT_SECRET",
+            "value": "supersecret"
+          }
+        ],
+        "essential": true
+      }
+    ]
+  }
+  

@@ -1,0 +1,73 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: us-east-1
+    ACCOUNT_ID: 123456789012
+
+phases:
+
+  install:
+    runtime-versions:
+      docker: 24
+    commands:
+      - echo "Installing dependencies..."
+      - aws --version
+      - docker --version
+
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_REGION \
+        | docker login \
+        --username AWS \
+        --password-stdin $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      - REPO_AUTH=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/taskflow/auth-service
+      - REPO_TASK=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/taskflow/task-service
+      - REPO_GATEWAY=$ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/taskflow/api-gateway
+
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+
+  build:
+    commands:
+      - echo "Building Docker images..."
+
+      # Auth
+      - docker build -t $REPO_AUTH:latest ./auth-service
+      - docker tag $REPO_AUTH:latest $REPO_AUTH:$IMAGE_TAG
+
+      # Task
+      - docker build -t $REPO_TASK:latest ./task-service
+      - docker tag $REPO_TASK:latest $REPO_TASK:$IMAGE_TAG
+
+      # Gateway
+      - docker build -t $REPO_GATEWAY:latest ./api-gateway
+      - docker tag $REPO_GATEWAY:latest $REPO_GATEWAY:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo "Pushing images to ECR..."
+
+      # Auth
+      - docker push $REPO_AUTH:latest
+      - docker push $REPO_AUTH:$IMAGE_TAG
+
+      # Task
+      - docker push $REPO_TASK:latest
+      - docker push $REPO_TASK:$IMAGE_TAG
+
+      # Gateway
+      - docker push $REPO_GATEWAY:latest
+      - docker push $REPO_GATEWAY:$IMAGE_TAG
+
+      - echo "Build completed on $(date)"
+
+artifacts:
+  files:
+    - taskdef-auth.json
+    - taskdef-task.json
+    - taskdef-gateway.json
+    - imagedefinitions-auth.json
+    - imagedefinitions-task.json
+    - imagedefinitions-gateway.json
